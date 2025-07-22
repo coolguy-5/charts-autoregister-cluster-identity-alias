@@ -119,11 +119,10 @@ jobs:
           --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
           --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
           --set-string strongdm.auth.adminToken="${{ secrets.SDM_ADMIN_TOKEN }}" \
-          --set-string strongdm.autoRegisterCluster.extraArgs="--proxy-cluster-id=${{ secrets.SDM_PROXY_CLUSTER_ID }}" \
           --namespace sdm-proxy \
           --create-namespace \
           --wait \
-          --timeout 10m
+          --timeout 1m
           
     - name: Verify Helm deployments
       run: |
