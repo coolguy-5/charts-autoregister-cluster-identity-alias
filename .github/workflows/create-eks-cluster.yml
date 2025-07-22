@@ -1,0 +1,78 @@
+name: Create EKS Cluster
+
+on:
+  workflow_dispatch
+
+env:
+  AWS_REGION: us-west-2
+
+jobs:
+  create-cluster:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Validate inputs
+      run: |
+        if [ ${{ secrets.AWS_NODE_COUNT }} -lt 3 ]; then
+          echo "Error: Node count must be at least 3"
+          exit 1
+        fi
+        
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Install eksctl
+      run: |
+        # Download and install eksctl
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+        eksctl version
+        
+    - name: Install kubectl
+      run: |
+        # Download and install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+        kubectl version --client
+        
+
+    - name: Create EKS cluster
+      run: |
+        eksctl create cluster \
+          --name ${{ env.CLUSTER_NAME }} \
+          --region ${{ secrets.AWS_REGION }} \
+          --nodes ${{ secrets.NODE_COUNT }} \
+          --node-type ${{ env.NODE_TYPE }} \
+          --managed \
+          --with-oidc
+          
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{  env.CLUSTER_NAME }}
+          
+    - name: Verify cluster creation
+      run: |
+        # Wait for cluster to be ready
+        echo "Waiting for cluster to be ready..."
+        
+        kubectl get nodes
+        kubectl get pods --all-namespaces
+        
+    - name: Output cluster info
+      run: |
+        echo "Cluster created successfully!"
+        echo "Cluster name: ${{ env.CLUSTER_NAME }}"
+        echo "Region: ${{ secrets.AWS_REGION }}"
+        echo "Nodes: ${{ secrets.NODE_COUNT }}"
+        echo "Node type: ${{ env.NODE_TYPE }}"
+        
+        # Get cluster endpoint
+        aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} --query 'cluster.endpoint' --output text 
