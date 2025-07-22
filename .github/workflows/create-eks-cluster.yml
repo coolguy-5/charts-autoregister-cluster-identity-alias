@@ -85,6 +85,8 @@ jobs:
         # Fallback: Delete CloudFormation stacks
         echo "Attempting CloudFormation stack cleanup..."
         
+        sleep 10
+
         # Delete cluster stack
         CLUSTER_STACK="eksctl-${{ vars.CLUSTER_NAME }}-cluster"
         aws cloudformation delete-stack --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} || true
