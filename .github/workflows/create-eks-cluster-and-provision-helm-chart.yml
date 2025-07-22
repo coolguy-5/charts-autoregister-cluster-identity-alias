@@ -41,8 +41,21 @@ jobs:
         sudo mv kubectl /usr/local/bin/
         kubectl version --client
         
-    - name: Create EKS cluster
+    - name: Check if EKS cluster exists
+      id: check-cluster
       run: |
+        if aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} >/dev/null 2>&1; then
+          echo "cluster-exists=true" >> $GITHUB_OUTPUT
+          echo "Cluster ${{ vars.CLUSTER_NAME }} already exists"
+        else
+          echo "cluster-exists=false" >> $GITHUB_OUTPUT
+          echo "Cluster ${{ vars.CLUSTER_NAME }} does not exist"
+        fi
+        
+    - name: Create EKS cluster
+      if: steps.check-cluster.outputs.cluster-exists == 'false'
+      run: |
+        echo "Creating new EKS cluster..."
         eksctl create cluster \
           --name ${{ vars.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
@@ -55,10 +68,13 @@ jobs:
       run: |
         aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ vars.CLUSTER_NAME }}
           
-    - name: Verify cluster creation
+    - name: Verify cluster status
       run: |
-        # Wait for cluster to be ready
-        echo "Waiting for cluster to be ready..."
+        if [ "${{ steps.check-cluster.outputs.cluster-exists }}" == "true" ]; then
+          echo "Using existing cluster ${{ vars.CLUSTER_NAME }}"
+        else
+          echo "Waiting for new cluster to be ready..."
+        fi
         kubectl get nodes
         kubectl get pods --all-namespaces
         
