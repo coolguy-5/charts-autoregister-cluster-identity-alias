@@ -44,16 +44,16 @@ jobs:
     - name: Create EKS cluster
       run: |
         eksctl create cluster \
-          --name ${{ env.CLUSTER_NAME }} \
+          --name ${{ vars.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
           --nodes ${{ secrets.NODE_COUNT }} \
-          --node-type ${{ secrets.NODE_TYPE }} \
+          --node-type ${{ vars.NODE_TYPE }} \
           --managed \
           --with-oidc
           
     - name: Update kubeconfig
       run: |
-        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{  env.CLUSTER_NAME }}
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ vars.CLUSTER_NAME }}
           
     - name: Verify cluster creation
       run: |
@@ -65,10 +65,10 @@ jobs:
     - name: Output cluster info
       run: |
         echo "Cluster created successfully!"
-        echo "Cluster name: ${{ env.CLUSTER_NAME }}"
+        echo "Cluster name: ${{ vars.CLUSTER_NAME }}"
         echo "Region: ${{ secrets.AWS_REGION }}"
         echo "Nodes: ${{ secrets.NODE_COUNT }}"
-        echo "Node type: ${{ env.NODE_TYPE }}"
+        echo "Node type: ${{ vars.NODE_TYPE }}"
         
         # Get cluster endpoint
-        aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} --query 'cluster.endpoint' --output text 
+        aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --query 'cluster.endpoint' --output text 
