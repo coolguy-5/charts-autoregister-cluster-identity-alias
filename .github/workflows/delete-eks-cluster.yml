@@ -56,6 +56,7 @@ jobs:
     - name: Audit permissions used during deletion
       if: always()
       run: |
+        sleep 30
         aws cloudtrail lookup-events \
           --lookup-attributes AttributeKey=Username,AttributeValue=anthony-helm-gh-action \
           --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \

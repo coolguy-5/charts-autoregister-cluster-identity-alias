@@ -1,4 +1,4 @@
-name: Create EKS Cluster
+name: Create EKS Cluster and Provision the Helm Chart
 
 on:
   workflow_dispatch
@@ -75,6 +75,7 @@ jobs:
         
     - name: Audit permissions used during cluster creation
       run: |
+        sleep 30
         aws cloudtrail lookup-events \
           --lookup-attributes AttributeKey=Username,AttributeValue=anthony-helm-gh-action \
           --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
@@ -82,5 +83,40 @@ jobs:
             .Events[] |
             . as $e |
             ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
+        
+    - name: Install Helm
+      run: |
+        # Download and install Helm
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+        helm version
+        
+    - name: Deploy SDM Proxy Helm Chart (Local)
+      run: |
+        helm install sdm-proxy ./deployments/sdm-proxy \
+          -f ./deployments/sdm-proxy/values_integration_test.yaml \
+          --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
+          --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
+          --set-string strongdm.auth.adminToken="${{ secrets.SDM_ADMIN_TOKEN }}" \
+          --set-string strongdm.autoRegisterCluster.extraArgs="--proxy-cluster-id=${{ secrets.SDM_PROXY_CLUSTER_ID }}" \
+          --namespace sdm-proxy \
+          --create-namespace \
+          --wait \
+          --timeout 10m
+          
+    - name: Verify Helm deployments
+      run: |
+        echo "Checking Helm releases..."
+        helm list --all-namespaces
+        
+        echo "Checking pod status..."
+        kubectl get pods --all-namespaces
+        
+        echo "Checking services..."
+        kubectl get services --all-namespaces
+        
+        echo "Checking deployment status..."
+        kubectl get deployments --all-namespaces
         
  
