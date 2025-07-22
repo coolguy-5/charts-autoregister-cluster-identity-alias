@@ -84,7 +84,7 @@ jobs:
             ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
         
     - name: Cleanup on failure
-      if: failure()
+      if: always()
       run: |
         echo "Workflow failed, attempting to cleanup cluster..."
         
