@@ -3,9 +3,6 @@ name: Create EKS Cluster
 on:
   workflow_dispatch
 
-env:
-  AWS_REGION: us-west-2
-
 jobs:
   create-cluster:
     runs-on: ubuntu-latest
@@ -47,10 +44,10 @@ jobs:
     - name: Create EKS cluster
       run: |
         eksctl create cluster \
-          --name ${{ env.CLUSTER_NAME }} \
+          --name ${{ secrets.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
           --nodes ${{ secrets.NODE_COUNT }} \
-          --node-type ${{ env.NODE_TYPE }} \
+          --node-type ${{ secrets.NODE_TYPE }} \
           --managed \
           --with-oidc
           
@@ -62,7 +59,6 @@ jobs:
       run: |
         # Wait for cluster to be ready
         echo "Waiting for cluster to be ready..."
-        
         kubectl get nodes
         kubectl get pods --all-namespaces
         
