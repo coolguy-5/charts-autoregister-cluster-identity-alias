@@ -75,8 +75,26 @@ jobs:
         
     - name: Cleanup on failure
       if: failure()
-      continue-on-error: true
       run: |
         echo "Workflow failed, attempting to cleanup cluster..."
-        eksctl delete cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} --wait || true
+        
+        # Try eksctl delete first
+        echo "Attempting eksctl delete..."
+        eksctl delete cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} --wait || echo "eksctl delete failed, trying CloudFormation cleanup..."
+        
+        # Fallback: Delete CloudFormation stacks
+        echo "Attempting CloudFormation stack cleanup..."
+        
+        # Delete cluster stack
+        CLUSTER_STACK="eksctl-${{ vars.CLUSTER_NAME }}-cluster"
+        aws cloudformation delete-stack --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} || true
+        echo "Initiated deletion of cluster stack: $CLUSTER_STACK"
+        
+        # Wait a bit for deletions to start
+        sleep 30
+        
+        # Check stack status
+        echo "CloudFormation cleanup status:"
+        aws cloudformation describe-stacks --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "Cluster stack not found or deleted"
+        
         echo "Cleanup attempt completed" 
