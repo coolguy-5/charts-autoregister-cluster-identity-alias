@@ -108,6 +108,10 @@ jobs:
         ./get_helm.sh
         helm version
         
+    - name: Uninstall existing SDM Proxy Helm Chart
+      run: |
+        helm uninstall sdm-proxy --namespace sdm-proxy || echo "No existing release to uninstall"
+        
     - name: Deploy SDM Proxy Helm Chart (Local)
       run: |
         helm install sdm-proxy ./deployments/sdm-proxy \
