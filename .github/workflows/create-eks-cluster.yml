@@ -6,11 +6,12 @@ on:
 jobs:
   create-cluster:
     runs-on: ubuntu-latest
+    environment: dev
     
     steps:
     - name: Validate inputs
       run: |
-        if [ ${{ secrets.AWS_NODE_COUNT }} -lt 3 ]; then
+        if [ ${{ secrets.NODE_COUNT }} -lt 3 ]; then
           echo "Error: Node count must be at least 3"
           exit 1
         fi
@@ -40,7 +41,6 @@ jobs:
         sudo mv kubectl /usr/local/bin/
         kubectl version --client
         
-
     - name: Create EKS cluster
       run: |
         eksctl create cluster \
