@@ -115,14 +115,12 @@ jobs:
     - name: Deploy SDM Proxy Helm Chart (Local)
       run: |
         helm install sdm-proxy ./deployments/sdm-proxy \
-          -f ./deployments/sdm-proxy/values_integration_test.yaml \
+          --values ./deployments/sdm-proxy/values_integration_test.yaml \
           --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
           --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
           --set-string strongdm.auth.adminToken="${{ secrets.SDM_ADMIN_TOKEN }}" \
           --namespace sdm-proxy \
-          --create-namespace \
-          --wait \
-          --timeout 1m
+          --create-namespace
           
     - name: Verify Helm deployments
       run: |
