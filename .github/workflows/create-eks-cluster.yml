@@ -73,6 +73,16 @@ jobs:
         # Get cluster endpoint
         aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --query 'cluster.endpoint' --output text
         
+    - name: Audit permissions used during cluster creation
+      run: |
+        aws cloudtrail lookup-events \
+          --lookup-attributes AttributeKey=Username,AttributeValue=anthony-helm-gh-action \
+          --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
+          --output json | jq -r '
+            .Events[] |
+            . as $e |
+            ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
+        
     - name: Cleanup on failure
       if: failure()
       run: |
@@ -100,3 +110,14 @@ jobs:
         aws cloudformation describe-stacks --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "Cluster stack not found or deleted"
         
         echo "Cleanup attempt completed" 
+        
+    - name: Audit permissions used
+      if: always()
+      run: |
+        aws cloudtrail lookup-events \
+          --lookup-attributes AttributeKey=Username,AttributeValue=anthony-helm-gh-action \
+          --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
+          --output json | jq -r '
+            .Events[] |
+            . as $e |
+            ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq 
