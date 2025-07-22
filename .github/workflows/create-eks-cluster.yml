@@ -71,4 +71,12 @@ jobs:
         echo "Node type: ${{ vars.NODE_TYPE }}"
         
         # Get cluster endpoint
-        aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --query 'cluster.endpoint' --output text 
+        aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --query 'cluster.endpoint' --output text
+        
+    - name: Cleanup on failure
+      if: failure()
+      continue-on-error: true
+      run: |
+        echo "Workflow failed, attempting to cleanup cluster..."
+        eksctl delete cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} --wait || true
+        echo "Cleanup attempt completed" 
