@@ -127,9 +127,11 @@ jobs:
       run: |
         # Download and install StrongDM CLI
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
-        sudo dpkg -i sdm*.deb
+        unzip sdmcli_*.zip
+        sudo mv sdm /usr/local/bin/
+        sudo chmod +x /usr/local/bin/sdm
         sdm --version
-        
+          
     - name: Configure StrongDM CLI
       run: |
         # Configure CLI with admin token
