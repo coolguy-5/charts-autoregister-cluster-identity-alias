@@ -46,8 +46,7 @@ jobs:
     - name: Test StrongDM CLI Commands
       run: |
         echo "Testing StrongDM CLI functionality..."
-        sdm admin nodes list
-        sdm admin gateways list
+        sdm admin clusters list
        
 
     - name: Install eksctl
@@ -75,7 +74,7 @@ jobs:
           echo "cluster-exists=false" >> $GITHUB_OUTPUT
           echo "Cluster ${{ vars.CLUSTER_NAME }} does not exist"
         fi
-        
+    
     - name: Create EKS cluster
       if: steps.check-cluster.outputs.cluster-exists == 'false'
       run: |
@@ -123,7 +122,15 @@ jobs:
             .Events[] |
             . as $e |
             ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
-        
+
+    - name: Delete SDM Cluster
+      if: always()
+      run: |
+        echo "Testing StrongDM CLI functionality..."
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
+        echo "Found cluster ID: $CLUSTER_ID"
+        sdm admin clusters delete $CLUSTER_ID
+
     - name: Install Helm
       run: |
         # Download and install Helm
@@ -138,14 +145,7 @@ jobs:
         sleep 5
         kubectl delete job -n sdm-proxy sdm-proxy-register-cluster || echo "Job isn't lingering after uninstall"
     
-    - name: Delete SDM Cluster
-      if: always()
-      run: |
-        echo "Testing StrongDM CLI functionality..."
-        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
-        echo "Found cluster ID: $CLUSTER_ID"
-        sdm admin clusters delete $CLUSTER_ID
-        
+
     - name: Deploy SDM Proxy Helm Chart (Local)
       run: |
         helm install sdm-proxy ./deployments/sdm-proxy \
