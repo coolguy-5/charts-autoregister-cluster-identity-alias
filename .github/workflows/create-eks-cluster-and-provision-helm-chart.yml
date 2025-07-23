@@ -127,6 +127,7 @@ jobs:
         if [ -n "$CLUSTER_ID" ]; then
           echo "Deleting cluster with ID: $CLUSTER_ID"
           sdm admin clusters delete $CLUSTER_ID
+        fi
         echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
         
 
