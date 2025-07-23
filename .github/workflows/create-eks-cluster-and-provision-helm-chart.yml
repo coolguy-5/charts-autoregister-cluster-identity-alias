@@ -124,7 +124,11 @@ jobs:
         echo "Testing StrongDM CLI functionality..."
         CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
         echo "Found cluster ID: $CLUSTER_ID"
-        sdm admin clusters delete $CLUSTER_ID
+        if [ -n "$CLUSTER_ID" ]; then
+          echo "Deleting cluster with ID: $CLUSTER_ID"
+          sdm admin clusters delete $CLUSTER_ID
+        echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
+        
 
     - name: Install Helm
       run: |
