@@ -58,7 +58,7 @@ jobs:
       run: |
         sleep 30
         aws cloudtrail lookup-events \
-          --lookup-attributes AttributeKey=Username,AttributeValue=${{ secrets.IAM_USER_NAME }}\
+          --lookup-attributes AttributeKey=Username,AttributeValue=${{ vars.IAM_USER_NAME }}\
           --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
           --output json | jq -r '
             .Events[] |
