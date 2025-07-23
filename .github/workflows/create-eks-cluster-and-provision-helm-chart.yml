@@ -112,7 +112,7 @@ jobs:
       run: |
         helm uninstall sdm-proxy --namespace sdm-proxy || echo "No existing release to uninstall"
         sleep 5
-        kubectl delete job -n sdm-proxy sdm-proxy-register-cluster
+        kubectl delete job -n sdm-proxy sdm-proxy-register-cluster || echo "Job isn't lingering after uninstall"
         
     - name: Deploy SDM Proxy Helm Chart (Local)
       run: |
