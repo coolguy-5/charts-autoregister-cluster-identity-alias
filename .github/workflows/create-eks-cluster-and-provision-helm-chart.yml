@@ -116,6 +116,7 @@ jobs:
         
     - name: Deploy SDM Proxy Helm Chart (Local)
       run: |
+        set +e  # Don't exit on error so we can debug
         helm install sdm-proxy ./deployments/sdm-proxy \
           --values ./deployments/sdm-proxy/values_integration_test.yaml \
           --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
@@ -124,6 +125,71 @@ jobs:
           --set-string strongdm.autoRegisterCluster.extraArgs="--proxy-cluster-id=${{ secrets.SDM_PROXY_CLUSTER_ID }}" \
           --namespace sdm-proxy \
           --create-namespace
+        
+        INSTALL_RESULT=$?
+        if [ $INSTALL_RESULT -ne 0 ]; then
+          echo "=== Helm install failed with exit code $INSTALL_RESULT, debugging... ==="
+          
+          echo "=== Checking namespace status ==="
+          kubectl get namespaces | grep sdm || echo "No sdm namespaces found"
+          
+          echo "=== Checking all resources in sdm-proxy namespace ==="
+          kubectl get all -n sdm-proxy || echo "Namespace may not exist"
+          
+          echo "=== Checking for any post-install job ==="
+          kubectl get jobs -n sdm-proxy || echo "No jobs found"
+          kubectl describe job -n sdm-proxy sdm-proxy-register-cluster || echo "Job not found"
+          
+          echo "=== Checking for job pods ==="
+          kubectl get pods -n sdm-proxy -l job-name=sdm-proxy-register-cluster || echo "No job pods found"
+          
+          echo "=== Getting job logs if available ==="
+          kubectl logs -n sdm-proxy -l job-name=sdm-proxy-register-cluster --tail=100 || echo "No logs available"
+          
+          echo "=== Checking secrets ==="
+          kubectl get secrets -n sdm-proxy || echo "No secrets found"
+          
+          echo "=== Checking events for debugging ==="
+          kubectl get events -n sdm-proxy --sort-by='.lastTimestamp' || echo "No events found"
+          
+          echo "=== Helm status ==="
+          helm status sdm-proxy -n sdm-proxy || echo "Helm release not found"
+          
+          exit $INSTALL_RESULT
+        fi
+          
+    - name: Debug Post-Install Job Status
+      if: failure()
+      run: |
+        echo "=== Checking namespace status ==="
+        kubectl get namespaces | grep sdm
+        
+        echo "=== Checking all resources in sdm-proxy namespace ==="
+        kubectl get all -n sdm-proxy
+        
+        echo "=== Checking post-install job details ==="
+        kubectl describe job -n sdm-proxy sdm-proxy-register-cluster || echo "Job not found"
+        
+        echo "=== Checking post-install job pods ==="
+        kubectl get pods -n sdm-proxy -l job-name=sdm-proxy-register-cluster
+        
+        echo "=== Getting post-install job logs ==="
+        kubectl logs -n sdm-proxy -l job-name=sdm-proxy-register-cluster --tail=100 || echo "No logs available"
+        
+        echo "=== Checking secrets ==="
+        kubectl get secrets -n sdm-proxy
+        kubectl describe secret -n sdm-proxy sdm-proxy-secrets || echo "Secret not found"
+        
+        echo "=== Checking service account and RBAC ==="
+        kubectl get serviceaccounts -n sdm-proxy
+        kubectl get clusterroles | grep sdm-proxy
+        kubectl get clusterrolebindings | grep sdm-proxy
+        
+        echo "=== Checking configmap ==="
+        kubectl describe configmap -n sdm-proxy sdm-proxy-config || echo "ConfigMap not found"
+        
+        echo "=== Helm status ==="
+        helm status sdm-proxy -n sdm-proxy || echo "Helm release not found"
           
     - name: Install StrongDM CLI Client
       run: |
