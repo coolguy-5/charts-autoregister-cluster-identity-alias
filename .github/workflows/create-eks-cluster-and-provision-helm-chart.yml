@@ -135,7 +135,7 @@ jobs:
     - name: Configure StrongDM CLI
       run: |
         # Configure CLI with admin token
-        echo "${{ secrets.SDM_ADMIN_TOKEN }}" | sdm login --admin-token
+        sdm login --admin-token ${{ secrets.SDM_ADMIN_TOKEN }}
         
         # Verify authentication
         sdm status
