@@ -73,6 +73,7 @@ jobs:
         sdm --version
         
     - name: Configure StrongDM CLI
+      if: always()
       run: |
         # Configure CLI with admin token
         echo "${{ secrets.SDM_ADMIN_TOKEN }}" | sdm login --admin-token
@@ -81,6 +82,7 @@ jobs:
         sdm status
         
     - name: Test StrongDM CLI Commands
+      if: always()
       run: |
         echo "Testing StrongDM CLI functionality..."
         sdm admin clusters list
