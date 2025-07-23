@@ -93,7 +93,7 @@ jobs:
       run: |
         sleep 30
         aws cloudtrail lookup-events \
-          --lookup-attributes AttributeKey=Username,AttributeValue=anthony-helm-gh-action \
+          --lookup-attributes AttributeKey=Username,AttributeValue=${{ secrets.IAM_USER_NAME }} \
           --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
           --output json | jq -r '
             .Events[] |
@@ -123,6 +123,21 @@ jobs:
           --namespace sdm-proxy \
           --create-namespace
           
+    - name: Install StrongDM CLI Client
+      run: |
+        # Download and install StrongDM CLI
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        sudo dpkg -i sdm*.deb
+        sdm --version
+        
+    - name: Configure StrongDM CLI
+      run: |
+        # Configure CLI with admin token
+        echo "${{ secrets.SDM_ADMIN_TOKEN }}" | sdm login --admin-token
+        
+        # Verify authentication
+        sdm status
+        
     - name: Verify Helm deployments
       run: |
         echo "Checking Helm releases..."
@@ -136,5 +151,11 @@ jobs:
         
         echo "Checking deployment status..."
         kubectl get deployments --all-namespaces
+        
+    - name: Test StrongDM CLI Commands
+      run: |
+        echo "Testing StrongDM CLI functionality..."
+        sdm admin nodes list
+        sdm admin gateways list
         
  
