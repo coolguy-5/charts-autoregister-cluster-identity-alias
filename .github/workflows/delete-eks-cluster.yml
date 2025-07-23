@@ -87,7 +87,7 @@ jobs:
       if: always()
       run: |
         echo "Testing StrongDM CLI functionality..."
-        CLUSTER_ID=$(sdm admin clusters list | grep -i "gh-action" | awk '{print $1}')
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
         echo "Found cluster ID: $CLUSTER_ID"
         sdm admin clusters delete $CLUSTER_ID
         
