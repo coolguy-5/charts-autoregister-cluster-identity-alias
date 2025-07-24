@@ -200,6 +200,9 @@ jobs:
         echo "--- Job YAML ---"
         kubectl get job sdm-proxy-register-cluster -n sdm-proxy -o yaml || echo "Job YAML not available"
         
+        echo "=== DEBUG COMPLETE - FAILING WORKFLOW ==="
+        exit 1
+        
     - name: Verify Helm deployments
       run: |
         echo "Checking Helm releases..."
