@@ -6,14 +6,17 @@ on:
 jobs:
   test-cli:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+      options: --user root
 
     steps:
     - name: Install StrongDM CLI Client
       run: |
         # Download and install StrongDM CLI
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
-        sudo apt -y install unzip
+        apt update && apt -y install unzip
         unzip sdmcli_*.zip
         export SDM_ADMIN_TOKEN=${{ secrets.SDM_ADMIN_TOKEN }}
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart
-        sudo sdm login --admin-token "${SDM_ADMIN_TOKEN}"
+        ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart
+        sdm login --admin-token "${SDM_ADMIN_TOKEN}"
