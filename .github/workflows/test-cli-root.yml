@@ -20,5 +20,9 @@ jobs:
         apt update && apt -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
-        ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart --user root
-        sdm login --admin-token $SDM_ADMIN_TOKEN
+        
+        # Debug: Check if token is set
+        echo "Token length: ${#SDM_ADMIN_TOKEN}"
+        
+        ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
+        sdm login --admin-token "$SDM_ADMIN_TOKEN"
