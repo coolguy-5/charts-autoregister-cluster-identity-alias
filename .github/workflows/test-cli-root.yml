@@ -15,7 +15,6 @@ jobs:
     - name: Install StrongDM CLI Client
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_ADMIN_TOKEN }}
-        SDM_APP_DOMAIN: "app.strongdm.com"
       run: |
         # Install dependencies and download StrongDM CLI
         apt update && apt -y install curl unzip
