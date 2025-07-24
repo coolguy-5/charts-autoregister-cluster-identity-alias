@@ -16,4 +16,4 @@ jobs:
         unzip sdmcli_*.zip
         export SDM_ADMIN_TOKEN=${{ secrets.SDM_ADMIN_TOKEN }}
         sudo ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --user root --nostart
-        sudo sdm login
+        sudo sdm login --admin-token "${SDM_ADMIN_TOKEN}"
