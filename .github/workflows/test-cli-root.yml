@@ -20,4 +20,4 @@ jobs:
         export SDM_ADMIN_TOKEN=${{ secrets.SDM_ADMIN_TOKEN }}
         export SDM_APP_DOMAIN="app.strongdm.com"
         ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart --user root
-        sdm login --admin-token "${SDM_ADMIN_TOKEN}"
+        sdm login --admin-token $SDM_ADMIN_TOKEN
