@@ -24,10 +24,6 @@
 {{- end }}
 {{- end }}
 
-{{- define "strongdm.componentLabel" -}}
-app.kubernetes.io/component: {{ .Values.strongdm.gateway.enabled | ternary "gateway" "relay" }}
-{{- end }}
-
 # Args:
 # - addtl: (optional) map of labels to add
 {{- define "strongdm.labels" -}}
@@ -46,8 +42,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- define "strongdm.selectorLabels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{ include "strongdm.componentLabel" . }}
-{{- range $k, $v := .Values.strongdm.gateway.service.selectorLabels }}
+app.kubernetes.io/component: proxy
+{{- range $k, $v := .Values.strongdm.service.selectorLabels }}
 {{ $k }}: {{ $v | quote }}
 {{- end }}
 {{- end }}
@@ -92,5 +88,4 @@ resources:
 {{- end -}}
 {{- end -}}
 {{- end -}}
-
 {{- end }}

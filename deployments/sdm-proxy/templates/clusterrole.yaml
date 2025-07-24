@@ -41,7 +41,7 @@ roleRef:
   name: {{ include "strongdm.namespace" . }}-{{ include "strongdm.name" . }}-health
   apiGroup: rbac.authorization.k8s.io
 
-{{- if .Values.strongdm.discoveryUsername }}
+
 # ###
 # Discovery
 # ###
@@ -138,5 +138,4 @@ roleRef:
   kind: ClusterRole
   name: {{ include "strongdm.namespace" . }}-{{ include "strongdm.name" . }}-impersonate
   apiGroup: rbac.authorization.k8s.io
-
 {{- end }}
