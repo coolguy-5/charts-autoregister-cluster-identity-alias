@@ -147,6 +147,8 @@ jobs:
     
 
     - name: Deploy SDM Proxy Helm Chart (Local)
+      id: helm-install
+      continue-on-error: true
       run: |
         helm install sdm-proxy ./deployments/sdm-proxy \
           --values ./deployments/sdm-proxy/values_integration_test.yaml \
@@ -156,6 +158,49 @@ jobs:
           --set-string strongdm.autoRegisterCluster.extraArgs="--proxy-cluster-id=${{ secrets.SDM_PROXY_CLUSTER_ID }}" \
           --namespace sdm-proxy \
           --create-namespace
+    
+    - name: Debug failed Kubernetes job
+      if: steps.helm-install.outcome == 'failure'
+      run: |
+        echo "=== DEBUGGING FAILED HELM INSTALLATION ==="
+        
+        echo "--- Job Status ---"
+        kubectl get jobs -n sdm-proxy
+        
+        echo "--- Job Description ---"
+        kubectl describe job sdm-proxy-register-cluster -n sdm-proxy || echo "Job not found"
+        
+        echo "--- Pod Status ---"
+        kubectl get pods -n sdm-proxy
+        
+        echo "--- Failed Pods ---"
+        kubectl get pods -n sdm-proxy --field-selector=status.phase=Failed
+        
+        echo "--- Pod Logs ---"
+        for pod in $(kubectl get pods -n sdm-proxy -o jsonpath='{.items[*].metadata.name}'); do
+          echo "=== Logs for pod: $pod ==="
+          kubectl logs $pod -n sdm-proxy --previous || kubectl logs $pod -n sdm-proxy || echo "No logs available for $pod"
+          echo ""
+        done
+        
+        echo "--- Events ---"
+        kubectl get events -n sdm-proxy --sort-by=.metadata.creationTimestamp
+        
+        echo "--- Helm Release Status ---"
+        helm status sdm-proxy -n sdm-proxy || echo "Helm release not found"
+        
+        echo "--- All Resources in Namespace ---"
+        kubectl get all -n sdm-proxy
+        
+        echo "--- ConfigMaps ---"
+        kubectl get configmaps -n sdm-proxy
+        kubectl describe configmaps -n sdm-proxy || echo "No configmaps found"
+        
+        echo "--- Secrets ---"
+        kubectl get secrets -n sdm-proxy
+        
+        echo "--- Job YAML ---"
+        kubectl get job sdm-proxy-register-cluster -n sdm-proxy -o yaml || echo "Job YAML not available"
         
     - name: Verify Helm deployments
       run: |
