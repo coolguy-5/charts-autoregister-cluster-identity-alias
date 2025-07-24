@@ -12,7 +12,7 @@ jobs:
       run: |
         # Download and install StrongDM CLI
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
-        apt -y install unzip
+        sudo apt -y install unzip
         unzip sdmcli_*.zip
         ./sdm install --app-domain app.strongdm.com --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}" --user root --nostart
         sudo sdm login --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}"
