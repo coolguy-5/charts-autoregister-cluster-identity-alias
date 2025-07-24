@@ -31,15 +31,17 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "strongdm.serviceAccountName" . }}
     namespace: {{ include "strongdm.namespace" . }}
+  {{- if (or .Values.strongdm.autoRegisterCluster.identitySet .Values.strongdm.autoRegisterCluster.identitySetName) }}
   - kind: User
-    name: healthcheck
+    name: {{ .Values.strongdm.healthcheckUsername }}
     apiGroup: rbac.authorization.k8s.io
+  {{- end }}
 roleRef:
   kind: ClusterRole
   name: {{ include "strongdm.namespace" . }}-{{ include "strongdm.name" . }}-health
   apiGroup: rbac.authorization.k8s.io
 
-
+{{- if .Values.strongdm.discoveryUsername }}
 # ###
 # Discovery
 # ###
@@ -87,9 +89,11 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "strongdm.serviceAccountName" . }}
     namespace: {{ include "strongdm.namespace" . }}
+  {{- if (or .Values.strongdm.autoRegisterCluster.identitySet .Values.strongdm.autoRegisterCluster.identitySetName) }}
   - kind: User
-    name: discovery
+    name: {{ .Values.strongdm.discoveryUsername }}
     apiGroup: rbac.authorization.k8s.io
+  {{- end }}
 roleRef:
   kind: ClusterRole
   name: {{ include "strongdm.namespace" . }}-{{ include "strongdm.name" . }}-discovery
@@ -130,10 +134,9 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "strongdm.serviceAccountName" . }}
     namespace: {{ include "strongdm.namespace" . }}
-  - kind: User
-    name: impersonate
-    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: {{ include "strongdm.namespace" . }}-{{ include "strongdm.name" . }}-impersonate
   apiGroup: rbac.authorization.k8s.io
+
+{{- end }}

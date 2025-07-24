@@ -24,6 +24,10 @@
 {{- end }}
 {{- end }}
 
+{{- define "strongdm.componentLabel" -}}
+app.kubernetes.io/component: {{ .Values.strongdm.gateway.enabled | ternary "gateway" "relay" }}
+{{- end }}
+
 # Args:
 # - addtl: (optional) map of labels to add
 {{- define "strongdm.labels" -}}
@@ -42,8 +46,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- define "strongdm.selectorLabels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: proxy
-{{- range $k, $v := .Values.strongdm.service.selectorLabels }}
+{{ include "strongdm.componentLabel" . }}
+{{- range $k, $v := .Values.strongdm.gateway.service.selectorLabels }}
 {{ $k }}: {{ $v | quote }}
 {{- end }}
 {{- end }}
@@ -70,4 +74,23 @@ resources:
 {{- else -}}
 {{ printf "%s:%s" .Values.strongdm.image.repository .Values.strongdm.image.tag }}
 {{- end -}}
+{{- end }}
+
+{{- define "strongdm.autoRegisterClusterArgs" -}}
+--healthcheck-namespace {{ .Values.strongdm.healthcheckNamespace }} \
+{{ if .Values.strongdm.discoveryUsername -}}
+--discovery-enabled \
+{{- end }}
+{{- with .Values.strongdm.autoRegisterCluster }}
+{{ if (or .identitySet .identitySetName) -}}
+--discovery-username {{ $.Values.strongdm.discoveryUsername }} \
+--identity-alias-healthcheck-username {{ $.Values.strongdm.healthcheckUsername }} \
+{{ if .identitySet -}}
+--identity-set {{ .identitySet }}
+{{- else if .identitySetName -}}
+--identity-set-name {{ .identitySetName }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- end }}
