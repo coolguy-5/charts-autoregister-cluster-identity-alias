@@ -1,0 +1,18 @@
+name: Test CLI
+
+on:
+  workflow_dispatch
+
+jobs:
+  test-cli:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Install StrongDM CLI Client
+      run: |
+        # Download and install StrongDM CLI
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        yum -y install unzip
+        unzip sdmcli_*.zip
+        ./sdm install --app-domain app.strongdm.com --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}" --user root --nostart
+        sdm login --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}"
