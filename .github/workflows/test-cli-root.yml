@@ -13,9 +13,9 @@ jobs:
     steps:
     - name: Install StrongDM CLI Client
       run: |
-        # Download and install StrongDM CLI
+        # Install dependencies and download StrongDM CLI
+        apt update && apt -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
-        apt update && apt -y install unzip
         unzip sdmcli_*.zip
         export SDM_ADMIN_TOKEN=${{ secrets.SDM_ADMIN_TOKEN }}
         ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart
