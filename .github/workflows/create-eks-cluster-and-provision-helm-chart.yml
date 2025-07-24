@@ -174,7 +174,7 @@ jobs:
         echo "--- Register Cluster Pod Logs ---"
         for pod in $(kubectl get pods -n sdm-proxy -l job-name=sdm-proxy-register-cluster -o jsonpath='{.items[*].metadata.name}'); do
           echo "=== Logs for register pod: $pod ==="
-          kubectl logs $pod -n sdm-proxy --previous || kubectl logs $pod -n sdm-proxy || echo "No logs available for $pod"
+          kubectl logs $pod -n sdm-proxy --previous 2>/dev/null || kubectl logs $pod -n sdm-proxy 2>/dev/null || echo "No logs available for $pod"
           echo ""
         done
         
