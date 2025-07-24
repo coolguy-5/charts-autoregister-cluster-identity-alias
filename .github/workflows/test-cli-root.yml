@@ -1,4 +1,4 @@
-name: Test CLI
+name: Test CLI as root
 
 on:
   workflow_dispatch
@@ -15,4 +15,4 @@ jobs:
         apt -y install unzip
         unzip sdmcli_*.zip
         ./sdm install --app-domain app.strongdm.com --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}" --user root --nostart
-        sdm login --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}"
+        sudo sdm login --admin-token "${{ secrets.SDM_ADMIN_TOKEN }}"
