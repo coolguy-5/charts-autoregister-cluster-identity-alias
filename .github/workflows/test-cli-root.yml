@@ -18,5 +18,6 @@ jobs:
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
         export SDM_ADMIN_TOKEN=${{ secrets.SDM_ADMIN_TOKEN }}
+        export SDM_APP_DOMAIN="app.strongdm.com"
         ./sdm install --app-domain app.strongdm.com --admin-token $SDM_ADMIN_TOKEN --nostart --user root
         sdm login --admin-token "${SDM_ADMIN_TOKEN}"
