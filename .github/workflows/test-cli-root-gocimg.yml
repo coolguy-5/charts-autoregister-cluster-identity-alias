@@ -9,7 +9,6 @@ jobs:
     environment: dev
     container:
       image: cimg/go:1.24.5
-      options: --user root
 
     steps:
     - name: Install StrongDM CLI Client
@@ -21,15 +20,20 @@ jobs:
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
         
-        # Debug: Check if token is set
-        echo "Token length: ${#SDM_ADMIN_TOKEN}"
+        # Create unprivileged user for SDM operations
+        sudo useradd -m -s /bin/bash sdmuser
+        sudo chown sdmuser:sdmuser ./sdm
         
-        ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
-        sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo sdm listen --daemon &
+        # Install as root
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart
+        
+        # Switch to unprivileged user for all SDM operations
+        sudo -u sdmuser sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sudo -u sdmuser sdm listen --daemon &
         echo "Waiting for daemon to start..."; date
         sleep 15
         echo "Wait complete"; date
                 
-        sudo sdm status
-        sudo sdm doctor -v
+        sudo -u sdmuser sdm status
+        sudo -u sdmuser sdm doctor -v
+        sudo -u sdmuser sdm ssh ssh-gh-action-test
