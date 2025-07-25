@@ -33,13 +33,11 @@ jobs:
         sudo chown -R sdmuser:sdmuser /home/sdmuser/.sdm
         
         echo "now try to ssh"
+        
         # Switch to unprivileged user for all SDM operations
-        sudo -u sdmuser -H bash -c "
-          export HOME=/home/sdmuser
-          sdm login --admin-token '$SDM_ADMIN_TOKEN'
-          sdm listen --daemon &
-          sleep 15
-          sdm status
-          sdm doctor -v
-          sdm ssh ssh-gh-action-test
-        "
+        sudo -u sdmuser sdm login --admin-token '$SDM_ADMIN_TOKEN'
+        sudo -u sdmuser sdm listen --daemon &
+        sleep 15
+        sudo -u sdmuser sdm status
+        sudo -u sdmuser sdm doctor -v
+        sudo -u sdmuser sdm ssh ssh-gh-action-test
