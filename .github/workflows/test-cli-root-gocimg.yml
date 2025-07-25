@@ -23,14 +23,16 @@ jobs:
         # Create unprivileged user for SDM operations  
         sudo useradd -m -s /bin/bash sdmuser
         sudo chown sdmuser:sdmuser ./sdm
-        
+        echo "beginning install"
         # Install as root but configure for sdmuser
         ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
         
         # Setup SDM config for unprivileged user
+        echo "mkdir and chown"
         sudo mkdir -p /home/sdmuser/.sdm
         sudo chown -R sdmuser:sdmuser /home/sdmuser/.sdm
         
+        echo "now try to ssh"
         # Switch to unprivileged user for all SDM operations
         sudo -u sdmuser -H bash -c "
           export HOME=/home/sdmuser
