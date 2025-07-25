@@ -22,6 +22,7 @@ jobs:
         
         # Create unprivileged user for SDM operations  
         sudo useradd -m -s /bin/bash sdmuser
+        echo "sdmuser ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/sdmuser
         sudo chown sdmuser:sdmuser ./sdm
         echo "beginning install"
         # Install as root but configure for sdmuser
