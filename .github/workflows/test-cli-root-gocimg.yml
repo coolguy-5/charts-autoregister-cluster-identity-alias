@@ -24,8 +24,8 @@ jobs:
         sudo useradd -m -s /bin/bash sdmuser
         sudo chown sdmuser:sdmuser ./sdm
         
-        # Install as root
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart
+        # Install as root but configure for sdmuser
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
         
         # Setup SDM config for unprivileged user
         sudo mkdir -p /home/sdmuser/.sdm
