@@ -26,7 +26,8 @@ jobs:
         
         ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
         sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sudo sdm listen --daemon
+        sleep 5
         
         sudo sdm status
-        sudo sdm listen --daemon
         sudo sdm doctor -v
