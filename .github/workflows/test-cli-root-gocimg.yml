@@ -20,20 +20,24 @@ jobs:
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
         
-        # Create unprivileged user for SDM operations
+        # Create unprivileged user for SDM operations  
         sudo useradd -m -s /bin/bash sdmuser
         sudo chown sdmuser:sdmuser ./sdm
         
         # Install as root
         sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart
         
+        # Setup SDM config for unprivileged user
+        sudo mkdir -p /home/sdmuser/.sdm
+        sudo chown -R sdmuser:sdmuser /home/sdmuser/.sdm
+        
         # Switch to unprivileged user for all SDM operations
-        sudo -u sdmuser sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo -u sdmuser sdm listen --daemon &
-        echo "Waiting for daemon to start..."; date
-        sleep 15
-        echo "Wait complete"; date
-                
-        sudo -u sdmuser sdm status
-        sudo -u sdmuser sdm doctor -v
-        sudo -u sdmuser sdm ssh ssh-gh-action-test
+        sudo -u sdmuser -H bash -c "
+          export HOME=/home/sdmuser
+          sdm login --admin-token '$SDM_ADMIN_TOKEN'
+          sdm listen --daemon &
+          sleep 15
+          sdm status
+          sdm doctor -v
+          sdm ssh ssh-gh-action-test
+        "
