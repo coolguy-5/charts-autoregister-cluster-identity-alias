@@ -1,4 +1,4 @@
-name: Test CLI as root
+name: Test CLI as root gocimg
 
 on:
   workflow_dispatch
