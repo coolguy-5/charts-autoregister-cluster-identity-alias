@@ -1,0 +1,30 @@
+name: Test CLI as root
+
+on:
+  workflow_dispatch
+
+jobs:
+  test-cli:
+    runs-on: ubuntu-latest
+    environment: dev
+    container:
+      image: ubuntu:latest
+      options: --user root
+
+    steps:
+    - name: Install StrongDM CLI Client
+      env:
+        SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
+      run: |
+        # Install dependencies and download StrongDM CLI
+        apt update && apt -y install curl unzip
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        unzip sdmcli_*.zip
+        
+        # Debug: Check if token is set
+        echo "Token length: ${#SDM_ADMIN_TOKEN}"
+        
+        ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
+        sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        
+        sdm status

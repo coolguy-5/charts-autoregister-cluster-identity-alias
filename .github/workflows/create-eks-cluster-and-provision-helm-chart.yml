@@ -1,0 +1,208 @@
+name: Create EKS Cluster and Provision the Helm Chart
+
+on:
+  workflow_dispatch
+
+jobs:
+  create-cluster:
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+    - name: Validate inputs
+      run: |
+        if [ ${{ secrets.NODE_COUNT }} -lt 3 ]; then
+          echo "Error: Node count must be at least 3"
+          exit 1
+        fi
+        
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Install StrongDM CLI Client
+      run: |
+        # Download and install StrongDM CLI
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        unzip sdmcli_*.zip
+        sudo mv sdm /usr/local/bin/
+        sudo chmod +x /usr/local/bin/sdm
+        sdm --version
+          
+    - name: Configure StrongDM CLI
+      run: |
+        # Configure CLI with admin token
+        sdm login --admin-token ${{ secrets.SDM_ADMIN_TOKEN }}
+        
+        # Verify authentication
+        sdm status
+       
+
+    - name: Install eksctl
+      run: |
+        # Download and install eksctl
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+        eksctl version
+        
+    - name: Install kubectl
+      run: |
+        # Download and install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+        kubectl version --client
+        
+    - name: Check if EKS cluster exists
+      id: check-cluster
+      run: |
+        if aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} >/dev/null 2>&1; then
+          echo "cluster-exists=true" >> $GITHUB_OUTPUT
+          echo "Cluster ${{ vars.CLUSTER_NAME }} already exists"
+        else
+          echo "cluster-exists=false" >> $GITHUB_OUTPUT
+          echo "Cluster ${{ vars.CLUSTER_NAME }} does not exist"
+        fi
+    
+    - name: Create EKS cluster
+      if: steps.check-cluster.outputs.cluster-exists == 'false'
+      run: |
+        echo "Creating new EKS cluster..."
+        eksctl create cluster \
+          --name ${{ vars.CLUSTER_NAME }} \
+          --region ${{ secrets.AWS_REGION }} \
+          --nodes ${{ secrets.NODE_COUNT }} \
+          --node-type ${{ vars.NODE_TYPE }} \
+          --managed \
+          --with-oidc
+          
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ vars.CLUSTER_NAME }}
+          
+    - name: Verify cluster status
+      run: |
+        if [ "${{ steps.check-cluster.outputs.cluster-exists }}" == "true" ]; then
+          echo "Using existing cluster ${{ vars.CLUSTER_NAME }}"
+        else
+          echo "Waiting for new cluster to be ready..."
+        fi
+        kubectl get nodes
+        kubectl get pods --all-namespaces
+        
+    - name: Output cluster info
+      run: |
+        echo "Cluster created successfully!"
+        echo "Cluster name: ${{ vars.CLUSTER_NAME }}"
+        echo "Region: ${{ secrets.AWS_REGION }}"
+        echo "Nodes: ${{ secrets.NODE_COUNT }}"
+        echo "Node type: ${{ vars.NODE_TYPE }}"
+        
+        # Get cluster endpoint
+        aws eks describe-cluster --name ${{ vars.CLUSTER_NAME }} --query 'cluster.endpoint' --output text
+        
+    - name: Audit permissions used during cluster creation
+      run: |
+        sleep 30
+        aws cloudtrail lookup-events \
+          --lookup-attributes AttributeKey=Username,AttributeValue=${{ vars.IAM_USER_NAME }} \
+          --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
+          --output json | jq -r '
+            .Events[] |
+            . as $e |
+            ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
+        
+    - name: Install Helm
+      run: |
+        # Download and install Helm
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+        helm version
+        
+    - name: Uninstall existing SDM Proxy Helm Chart
+      run: |
+        helm uninstall sdm-proxy --namespace sdm-proxy || echo "No existing release to uninstall"
+        sleep 15
+        kubectl delete job -n sdm-proxy sdm-proxy-register-cluster || echo "Job isn't lingering after uninstall"
+    
+    - name: Delete SDM Cluster
+      if: always()
+      run: |
+        echo "Testing StrongDM CLI functionality..."
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
+        echo "Found cluster ID: $CLUSTER_ID"
+        if [ -n "$CLUSTER_ID" ]; then
+          echo "Deleting cluster with ID: $CLUSTER_ID"
+          sdm admin clusters delete $CLUSTER_ID
+        fi
+        echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
+        
+    - name: Deploy SDM Proxy Helm Chart (Local)
+      id: helm-install
+      continue-on-error: true
+      run: |
+        helm install sdm-proxy ./deployments/sdm-proxy \
+          --values ./deployments/sdm-proxy/values_integration_test.yaml \
+          --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
+          --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
+          --set-string strongdm.auth.adminToken="${{ secrets.SDM_ADMIN_TOKEN }}" \
+          --set-string strongdm.autoRegisterCluster.extraArgs="--proxy-cluster-id=${{ secrets.SDM_PROXY_CLUSTER_ID }}" \
+          --namespace sdm-proxy \
+          --create-namespace
+    
+    - name: Debug failed register cluster job
+      if: steps.helm-install.outcome == 'failure'
+      run: |
+        echo "=== DEBUGGING FAILED REGISTER CLUSTER JOB ==="
+        
+        echo "--- Register Cluster Job Status ---"
+        kubectl get job sdm-proxy-register-cluster -n sdm-proxy || echo "Job not found"
+        
+        echo "--- Register Cluster Job Description ---"
+        kubectl describe job sdm-proxy-register-cluster -n sdm-proxy || echo "Job not found"
+        
+        echo "--- Register Cluster Pods ---"
+        kubectl get pods -n sdm-proxy -l job-name=sdm-proxy-register-cluster
+        
+        echo "--- Register Cluster Pod Logs ---"
+        for pod in $(kubectl get pods -n sdm-proxy -l job-name=sdm-proxy-register-cluster -o jsonpath='{.items[*].metadata.name}'); do
+          echo "=== Logs for register pod: $pod ==="
+          kubectl logs $pod -n sdm-proxy --previous 2>/dev/null || kubectl logs $pod -n sdm-proxy 2>/dev/null || echo "No logs available for $pod"
+          echo ""
+        done
+        
+        echo "--- Register Cluster Job Events ---"
+        kubectl get events -n sdm-proxy --field-selector involvedObject.name=sdm-proxy-register-cluster --sort-by=.metadata.creationTimestamp
+        
+        echo "--- Register Cluster Job YAML ---"
+        kubectl get job sdm-proxy-register-cluster -n sdm-proxy -o yaml || echo "Job YAML not available"
+        
+        echo "--- Register Cluster ConfigMap ---"
+        kubectl get configmap sdm-proxy-config -n sdm-proxy -o yaml || echo "ConfigMap not found"
+        
+        echo "=== DEBUG COMPLETE - FAILING WORKFLOW ==="
+        exit 1
+        
+    - name: Verify Helm deployments
+      run: |
+        echo "Checking Helm releases..."
+        helm list --all-namespaces
+        
+        echo "Checking pod status..."
+        kubectl get pods --all-namespaces
+        
+        echo "Checking services..."
+        kubectl get services --all-namespaces
+        
+        echo "Checking deployment status..."
+        kubectl get deployments --all-namespaces
+        
+
+ 

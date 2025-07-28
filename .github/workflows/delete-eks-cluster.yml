@@ -1,0 +1,98 @@
+name: Delete EKS Cluster
+
+on:
+  workflow_dispatch
+
+jobs:
+  delete-cluster:
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Install eksctl
+      run: |
+        # Download and install eksctl
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+        eksctl version
+        
+    - name: Delete EKS cluster
+      run: |
+        echo "Attempting to delete cluster: ${{ vars.CLUSTER_NAME }}"
+        
+        # Try eksctl delete first
+        echo "Attempting eksctl delete..."
+        eksctl delete cluster --name ${{ vars.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }} --wait || echo "eksctl delete failed, trying CloudFormation cleanup..."
+        
+        # Fallback: Delete CloudFormation stacks
+        echo "Attempting CloudFormation stack cleanup..."
+        
+        sleep 10
+
+        # Delete cluster stack
+        CLUSTER_STACK="eksctl-${{ vars.CLUSTER_NAME }}-cluster"
+        aws cloudformation delete-stack --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} || true
+        echo "Initiated deletion of cluster stack: $CLUSTER_STACK"
+        
+        # Wait a bit for deletions to start
+        sleep 30
+        
+        # Check stack status
+        echo "CloudFormation cleanup status:"
+        aws cloudformation describe-stacks --stack-name "$CLUSTER_STACK" --region ${{ secrets.AWS_REGION }} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "Cluster stack not found or deleted"
+        
+        echo "Cluster deletion completed"
+        
+    - name: Audit permissions used during deletion
+      if: always()
+      run: |
+        sleep 30
+        aws cloudtrail lookup-events \
+          --lookup-attributes AttributeKey=Username,AttributeValue=${{ vars.IAM_USER_NAME }}\
+          --max-results 1000 --start-time 2025-07-01T00:00:00Z --end-time 2025-07-22T23:59:59Z \
+          --output json | jq -r '
+            .Events[] |
+            . as $e |
+            ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
+
+    - name: Install StrongDM CLI Client
+      run: |
+        # Download and install StrongDM CLI
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        unzip sdmcli_*.zip
+        sudo mv sdm /usr/local/bin/
+        sudo chmod +x /usr/local/bin/sdm
+        sdm --version
+        
+    - name: Configure StrongDM CLI
+      if: always()
+      run: |
+        # Configure CLI with admin token
+        sdm login --admin-token ${{ secrets.SDM_ADMIN_TOKEN }}
+        
+        # Verify authentication
+        sdm status
+        
+    - name: Delete SDM Cluster
+      if: always()
+      run: |
+        echo "Testing StrongDM CLI functionality..."
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
+        echo "Found cluster ID: $CLUSTER_ID"
+        if [ -n "$CLUSTER_ID" ]; then
+          echo "Deleting cluster with ID: $CLUSTER_ID"
+          sdm admin clusters delete $CLUSTER_ID
+        fi
+        echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
+        
+ 
