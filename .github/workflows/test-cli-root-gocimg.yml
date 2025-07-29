@@ -19,14 +19,15 @@ jobs:
         unzip sdmcli_*.zip
         
         # Create unprivileged user for SDM operations  
+        sudo useradd -m -s /bin/bash circleci
         echo "beginning install"
         # Install as root but configure for sdmuser
         sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci
 
         
         # Switch to unprivileged user for all SDM operations
-        sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sdm listen --daemon &
+        sudo -u circleci sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sudo -u circleci sdm listen --daemon &
         sleep 15
-        sdm status
-        sdm doctor -v
+        sudo -u circleci sdm status
+        sudo -u circleci sdm doctor -v
