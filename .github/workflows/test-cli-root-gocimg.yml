@@ -7,8 +7,6 @@ jobs:
   test-cli:
     runs-on: ubuntu-latest
     environment: dev
-    container:
-      image: cimg/go:1.24.5
 
     steps:
     - name: Install StrongDM CLI Client
