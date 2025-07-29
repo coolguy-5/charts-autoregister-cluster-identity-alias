@@ -27,8 +27,8 @@ jobs:
         sudo mkdir -p /home/circleci
         pwd
         sudo chmod +x ./sdm
-        sudo chown circleci:circleci ./sdm
-        sudo -i -u circleci /home/runner/work/charts-autoregister-cluster-identity-alias/charts-autoregister-cluster-identity-alias/sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci --home /home/circleci
+        sudo cp ./sdm /usr/local/bin/sdm-installer
+        sudo -i -u circleci /usr/local/bin/sdm-installer install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci --home /home/circleci
         
         # Switch to unprivileged user for all SDM operations
         sudo -u circleci -H env HOME=/home/circleci sdm login --admin-token "$SDM_ADMIN_TOKEN"
