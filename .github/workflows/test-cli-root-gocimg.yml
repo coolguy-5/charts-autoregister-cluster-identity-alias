@@ -38,7 +38,7 @@ jobs:
         sudo chown circleci:circleci $SDM_HOME
         # Switch to unprivileged user for all SDM operations  
         sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sdm" sdm listen
+        sdm sdm listen
         sleep 15
         sdm status
         sdm doctor -v
