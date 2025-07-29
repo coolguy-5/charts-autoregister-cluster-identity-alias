@@ -26,8 +26,8 @@ jobs:
 
         
         # Switch to unprivileged user for all SDM operations
-        sudo -u circleci sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo -u circleci sdm listen --daemon &
+        sudo -u circleci -H sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sudo -u circleci -H sdm listen --daemon &
         sleep 15
-        sudo -u circleci sdm status
-        sudo -u circleci sdm doctor -v
+        sudo -u circleci -H sdm status
+        sudo -u circleci -H sdm doctor -v
