@@ -30,7 +30,7 @@ jobs:
         sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
         # Switch to unprivileged user for all SDM operations
         sudo sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        echo "SDM_HOME=/home/circleci/" > /etc/sysconfig/sdm
+        sudo echo "SDM_HOME=/home/circleci/" | tee -a /etc/sysconfig/sdm
         sdm listen --daemon &
         sleep 15
         sdm status
