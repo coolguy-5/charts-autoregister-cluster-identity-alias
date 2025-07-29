@@ -34,6 +34,8 @@ jobs:
         export SDM_HOME=/home/circleci/.sdm
         export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
         export SDM_VERBOSE=true
+        mkdir -p $SDM_HOME
+        sudo chown circleci:circleci $SDM_HOME
         # Switch to unprivileged user for all SDM operations  
         sdm login --admin-token "$SDM_ADMIN_TOKEN"
         sdm" sdm listen
