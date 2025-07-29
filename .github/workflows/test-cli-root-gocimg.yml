@@ -26,7 +26,7 @@ jobs:
         # Install as root but configure for sdmuser
         sudo mkdir -p /home/circleci
         pwd
-        chmod +x ./sdm
+        sudo chmod +x ./sdm
         sudo chown circleci:circleci ./sdm
         sudo -i -u circleci /home/runner/work/charts-autoregister-cluster-identity-alias/charts-autoregister-cluster-identity-alias/sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci --home /home/circleci
         
