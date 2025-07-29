@@ -13,6 +13,7 @@ jobs:
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
         HOME: "/home/circleci"
+        SDM_HOME: "/home/circleci"
       run: |
         # Install dependencies and download StrongDM CLI
         sudo apt-get update && sudo apt-get -y install curl unzip
