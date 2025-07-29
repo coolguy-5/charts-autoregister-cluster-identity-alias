@@ -21,17 +21,14 @@ jobs:
         unzip sdmcli_*.zip
         
         # Create unprivileged user for SDM operations  
-        sudo useradd -m -s /bin/bash sdmuser
-        echo "sdmuser ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/sdmuser
-        sudo chown sdmuser:sdmuser ./sdm
         echo "beginning install"
         # Install as root but configure for sdmuser
         sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci
 
         
         # Switch to unprivileged user for all SDM operations
-        sudo -u sdmuser sdm login --admin-token '$SDM_ADMIN_TOKEN'
-        sudo -u sdmuser sdm listen --daemon &
+        sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sdm listen --daemon &
         sleep 15
-        sudo -u sdmuser sdm status
-        sudo -u sdmuser sdm doctor -v
+        sdm status
+        sdm doctor -v
