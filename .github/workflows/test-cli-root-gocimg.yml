@@ -22,18 +22,16 @@ jobs:
         
         # Create unprivileged user for SDM operations  
         sudo useradd -m -s /bin/bash circleci
-        sudo usermod -aG sudo circleci
+        sudo usermod -aG sudo circleci 
         echo 'circleci ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/circleci
         echo "beginning install"
         # Install as root but configure for sdmuser
         sudo mkdir -p /home/circleci
-        pwd
-        sudo chmod +x ./sdm
-        sudo cp ./sdm /usr/local/bin/sdm-installer
-        sudo -u circleci env HOME=/home/circleci sudo ./sdm install --app-domain app.strongdm.com --admin-token "${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}" --nostart --user circleci --home /home/circleci
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
         # Switch to unprivileged user for all SDM operations
-        sudo -u circleci -H env HOME=/home/circleci sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo -u circleci -H env HOME=/home/circleci sdm listen --daemon &
+        sudo sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        export SDM_HOME="/home/circleci/"
+        sdm listen --daemon &
         sleep 15
-        sudo -u circleci -H env HOME=/home/circleci sdm status
-        sudo -u circleci -H env HOME=/home/circleci sdm doctor -v
+        sdm status
+        sdm doctor -v
