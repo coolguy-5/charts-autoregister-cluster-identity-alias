@@ -37,8 +37,8 @@ jobs:
         mkdir -p $SDM_HOME
         sudo chown circleci:circleci $SDM_HOME
         # Switch to unprivileged user for all SDM operations  
-        ./sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        ./sdm sdm listen
+        /usr/local/bin/sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        /usr/local/bin/sdm sdm listen
         sleep 15
-        ./sdm status
-        ./sdm doctor -v
+        /usr/local/bin/sdm status
+        /usr/local/bin/sdm doctor -v
