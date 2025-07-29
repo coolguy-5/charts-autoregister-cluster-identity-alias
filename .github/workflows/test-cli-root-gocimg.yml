@@ -7,31 +7,26 @@ jobs:
   test-cli:
     runs-on: ubuntu-latest
     environment: dev
+    container:
+      image: cimg/go:1.24.5
 
     steps:
     - name: Install StrongDM CLI Client
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
-        HOME: "/home/circleci"
-        SDM_HOME: "/home/circleci"
+        SDM_HOME: "/home/circleci/.sdm"
       run: |
         # Install dependencies and download StrongDM CLI
         sudo apt-get update && sudo apt-get -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
         
-        # Create unprivileged user for SDM operations  
-        sudo useradd -m -s /bin/bash circleci
-        sudo usermod -aG sudo circleci 
-        echo 'circleci ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/circleci
         echo "beginning install"
         # Install as root but configure for sdmuser
-        sudo mkdir -p /home/circleci
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
-        # Switch to unprivileged user for all SDM operations
-        sudo sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo echo "SDM_HOME=/home/circleci/" | sudo tee -a /etc/sysconfig/sdm
-        sdm listen --daemon &
+        sudo env SDM_HOME="/home/circleci/.sdm" ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
+        # Switch to unprivileged user for all SDM operations  
+        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm listen --daemon &
         sleep 15
-        sdm status
-        sdm doctor -v
+        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm status
+        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm doctor -v
