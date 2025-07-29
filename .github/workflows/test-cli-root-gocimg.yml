@@ -25,9 +25,18 @@ jobs:
         echo "beginning install"
         # Install as root but configure for sdmuser
         sudo env SDM_HOME="/home/circleci/.sdm" ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
+    
+    - name: Run the client
+      env:
+        SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
+
+      run: |
+        export SDM_HOME=/home/circleci/.sdm
+        export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
+        export SDM_VERBOSE=true
         # Switch to unprivileged user for all SDM operations  
-        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm listen --daemon &
+        sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        sdm" sdm listen
         sleep 15
-        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm status
-        sudo -u circleci env SDM_HOME="/home/circleci/.sdm" sdm doctor -v
+        sdm status
+        sdm doctor -v
