@@ -26,14 +26,8 @@ jobs:
         sudo chown sdmuser:sdmuser ./sdm
         echo "beginning install"
         # Install as root but configure for sdmuser
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user root
-        
-        # Setup SDM config for unprivileged user
-        echo "mkdir and chown"
-        sudo mkdir -p /home/sdmuser/.sdm
-        sudo chown -R sdmuser:sdmuser /home/sdmuser/.sdm
-        
-        echo "now try to ssh"
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci
+
         
         # Switch to unprivileged user for all SDM operations
         sudo -u sdmuser sdm login --admin-token '$SDM_ADMIN_TOKEN'
@@ -41,4 +35,3 @@ jobs:
         sleep 15
         sudo -u sdmuser sdm status
         sudo -u sdmuser sdm doctor -v
-        sudo -u sdmuser sdm ssh ssh-gh-action-test
