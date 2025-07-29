@@ -28,7 +28,7 @@ jobs:
         pwd
         sudo chmod +x ./sdm
         sudo cp ./sdm /usr/local/bin/sdm-installer
-        sudo -i -u circleci sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci --home /home/circleci        
+        sudo -i -u circleci sudo ./sdm install --app-domain app.strongdm.com --admin-token ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }} --nostart --user circleci --home /home/circleci        
         # Switch to unprivileged user for all SDM operations
         sudo -u circleci -H env HOME=/home/circleci sdm login --admin-token "$SDM_ADMIN_TOKEN"
         sudo -u circleci -H env HOME=/home/circleci sdm listen --daemon &
