@@ -24,6 +24,7 @@ jobs:
         echo "beginning install"
         # Install as root but configure for sdmuser
         sudo mkdir -p /home/circleci
+        env
         sudo ./sdm install --app-domain app.strongdm.com --admin-token "$SDM_ADMIN_TOKEN" --nostart --user circleci --home /home/circleci 
 
         
