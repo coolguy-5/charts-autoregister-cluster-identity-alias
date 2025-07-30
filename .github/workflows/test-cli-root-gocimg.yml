@@ -11,24 +11,31 @@ jobs:
       image: cimg/go:1.24.5
 
     steps:
-    - name: Run StrongDM CLI Client
+    - name: Install StrongDM CLI Client
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
         HOME: "/home/circleci"
         SDM_HOME: "/home/circleci/.sdm"
       run: |
-        # Install dependencies and download StrongDM CLI
         sudo apt-get update && sudo apt-get -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
+
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci
+    
+    - name: Run the client
+      env:
+        SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
+
+      run: |
         export SDM_HOME=/home/circleci/.sdm
         export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
         export SDM_VERBOSE=true
         mkdir -p $SDM_HOME
         sudo chown circleci:circleci $SDM_HOME
         # Switch to unprivileged user for all SDM operations  
-        ./sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        ./sdm listen --daemon &
+        /usr/local/bin/sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        /usr/local/bin/sdm listen --daemon &
         sleep 15
-        ./sdm status
-        ./sdm doctor -v
+        /usr/local/bin/sdm status
+        /usr/local/bin/sdm doctor -v
