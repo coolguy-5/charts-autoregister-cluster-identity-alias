@@ -11,7 +11,7 @@ jobs:
       image: cimg/go:1.24.5
 
     steps:
-    - name: Install StrongDM CLI Client
+    - name: Run StrongDM CLI Client
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
         HOME: "/home/circleci"
@@ -21,24 +21,14 @@ jobs:
         sudo apt-get update && sudo apt-get -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
-        
-        echo "beginning install"
-        # Install as root but configure for sdmuser
-        sudo env SDM_HOME="/home/circleci/.sdm" ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circleci
-    
-    - name: Run the client
-      env:
-        SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
-
-      run: |
         export SDM_HOME=/home/circleci/.sdm
         export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
         export SDM_VERBOSE=true
         mkdir -p $SDM_HOME
         sudo chown circleci:circleci $SDM_HOME
         # Switch to unprivileged user for all SDM operations  
-        /usr/local/bin/sdm login --admin-token "$SDM_ADMIN_TOKEN"
-        /usr/local/bin/sdm listen --daemon &
+        ./sdm login --admin-token "$SDM_ADMIN_TOKEN"
+        ./sdm listen --daemon &
         sleep 15
-        /usr/local/bin/sdm status
-        /usr/local/bin/sdm doctor -v
+        ./sdm status
+        ./sdm doctor -v
