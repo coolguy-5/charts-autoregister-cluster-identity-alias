@@ -15,13 +15,12 @@ jobs:
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
         HOME: "/home/circleci"
-        SDM_HOME: "/home/circleci/.sdm"
       run: |
         sudo apt-get update && sudo apt-get -y install curl unzip
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
 
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circle
     
     - name: Run the client
       env:
