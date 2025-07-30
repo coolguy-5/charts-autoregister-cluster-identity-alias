@@ -27,7 +27,7 @@ jobs:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
 
       run: |
-        export SDM_HOME=/home/circleci/.sdm
+        export SDM_HOME=/home/circleci/
         export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
         export SDM_VERBOSE=true
         mkdir -p $SDM_HOME
