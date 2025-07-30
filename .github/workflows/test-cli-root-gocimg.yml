@@ -20,14 +20,13 @@ jobs:
         curl -J -O -L https://app.strongdm.com/releases/cli/linux
         unzip sdmcli_*.zip
 
-        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci --home /home/circle
+        sudo ./sdm install --app-domain app.strongdm.com --admin-token "${SDM_ADMIN_TOKEN}" --nostart --user circleci
     
     - name: Run the client
       env:
         SDM_ADMIN_TOKEN: ${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}
 
       run: |
-        export SDM_HOME=/home/circleci/
         export SDM_ADMIN_TOKEN="${SDM_ADMIN_TOKEN}"
         export SDM_VERBOSE=true
         mkdir -p $SDM_HOME
