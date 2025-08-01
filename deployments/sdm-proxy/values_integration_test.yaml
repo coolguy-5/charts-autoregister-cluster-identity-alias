@@ -12,6 +12,7 @@ strongdm:
       service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "creator=Anthony"
       service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
       service.beta.kubernetes.io/aws-load-balancer-alpn-policy: HTTP2Optional
+    selectorLabels: {}
 
   serviceAccount:
     create: true
@@ -31,7 +32,8 @@ strongdm:
   #discoveryUsername: "gh-action-discovery"
   #healthcheckUsername: "gh-action-healthcheck"
   healthcheckNamespace: "sdm-proxy"
-    
+ 
+
   # Enable cluster access for Pod Identity
   clusterAccess:
     enabled: true
