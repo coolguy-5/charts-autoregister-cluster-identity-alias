@@ -28,8 +28,8 @@ strongdm:
     enabled: true
     
   # Discovery and identity aliases configuration
-  discoveryUsername: "gh-action-discovery"
-  healthcheckUsername: "gh-action-healthcheck"
+  #discoveryUsername: "gh-action-discovery"
+  #healthcheckUsername: "gh-action-healthcheck"
   healthcheckNamespace: "sdm-proxy"
     
   # Enable cluster access for Pod Identity
@@ -39,4 +39,3 @@ strongdm:
   autoRegisterCluster: # @schema; description: Cluster auto-registration configuration. Requires SDM_ADMIN_TOKEN be provided via one of the supported @strongdm.auth methods.
     enabled: true # @schema; description: Register this k8s cluster as a StrongDM Pod Identity Cluster. See https://www.strongdm.com/docs/admin/resources/clusters/kubernetes-podidentity/ for more information.
     resourceName: "gh-action-auto-register" # @schema; description: Name of the StrongDM Pod Identity Cluster resource to create.
-    identitySetName: "email" # @schema; description: Name of the Identity Set with which to register this cluster.
