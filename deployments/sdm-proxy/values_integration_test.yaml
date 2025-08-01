@@ -25,9 +25,9 @@ strongdm:
     clusterWide: true
   
   # Discovery and identity aliases configuration
-  # discoveryUsername: "gh-action-discovery"
-  # healthcheckUsername: "gh-action-healthcheck"
-  # healthcheckNamespace: "sdm-proxy"
+  discoveryUsername: "gh-action-discovery"
+  healthcheckUsername: "gh-action-healthcheck"
+  healthcheckNamespace: "sdm-proxy"
     
   # Enable cluster access for Pod Identity
   clusterAccess:
