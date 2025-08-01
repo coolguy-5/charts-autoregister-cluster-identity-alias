@@ -127,4 +127,4 @@ tests:
             pattern: 'test-name-resource'
         - notMatchRegex:
             path: spec.template.spec.containers[0].command[2]
-            pattern: '^\s+\ \\$'
+            pattern: '\s+\ \\'

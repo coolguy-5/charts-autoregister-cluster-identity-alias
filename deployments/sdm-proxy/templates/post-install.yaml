@@ -58,15 +58,9 @@ spec:
             - -c
             - |
               /sdm.linux login --admin-token="${SDM_ADMIN_TOKEN}"
-              {{- $cmdParts := list "/sdm.linux admin clusters add k8spodidentity" }}
-              {{- $cmdParts = append $cmdParts "--certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt" }}
-              {{- $clusterArgs := include "strongdm.autoRegisterClusterArgs" . | trim }}
-              {{- if $clusterArgs }}
-              {{- $cmdParts = append $cmdParts $clusterArgs }}
-              {{- end }}
-              {{- if .Values.strongdm.autoRegisterCluster.extraArgs }}
-              {{- $cmdParts = append $cmdParts .Values.strongdm.autoRegisterCluster.extraArgs }}
-              {{- end }}
-              {{- $cmdParts = append $cmdParts (default (printf "%s-cluster-%s" (include "strongdm.name" .) (randAlpha 5)) .Values.strongdm.autoRegisterCluster.resourceName) }}
-              {{ join " \\\n                " $cmdParts }}
+              /sdm.linux admin clusters add k8spodidentity \
+                --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+                {{- include "strongdm.autoRegisterClusterArgs" . | nindent 16 }} \
+                {{ .Values.strongdm.autoRegisterCluster.extraArgs }} \
+                {{ default (printf "%s-cluster-%s" (include "strongdm.name" .) (randAlpha 5)) .Values.strongdm.autoRegisterCluster.resourceName }}
 {{- end}}

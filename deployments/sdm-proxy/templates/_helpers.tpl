@@ -73,25 +73,21 @@ resources:
 {{- end }}
 
 {{- define "strongdm.autoRegisterClusterArgs" -}}
-{{- $args := list -}}
-{{- $args = append $args (printf "--healthcheck-namespace %s" .Values.strongdm.healthcheckNamespace) -}}
+--healthcheck-namespace {{ .Values.strongdm.healthcheckNamespace }} \
 {{- if .Values.strongdm.discoveryUsername -}}
-{{- $args = append $args "--discovery-enabled" -}}
+--discovery-enabled \
 {{- end -}}
-{{- with .Values.strongdm.autoRegisterCluster -}}
-{{- if (or .identitySet .identitySetName) -}}
-{{- $args = append $args (printf "--identity-alias-healthcheck-username %s" $.Values.strongdm.healthcheckUsername) -}}
-{{- if $.Values.strongdm.discoveryUsername -}}
-{{- $args = append $args (printf "--discovery-username %s" $.Values.strongdm.discoveryUsername) -}}
+{{- with .Values.strongdm.autoRegisterCluster }}
+{{ if (or .identitySet .identitySetName) -}}
+--identity-alias-healthcheck-username {{ $.Values.strongdm.healthcheckUsername }} \
+{{ if $.Values.strongdm.discoveryUsername -}}
+--discovery-username {{ $.Values.strongdm.discoveryUsername }} \
 {{- end -}}
-{{- if .identitySet -}}
-{{- $args = append $args (printf "--identity-set %s" .identitySet) -}}
+{{ if .identitySet -}}
+--identity-set {{ .identitySet }}
 {{- else if .identitySetName -}}
-{{- $args = append $args (printf "--identity-set-name %s" .identitySetName) -}}
+--identity-set-name {{ .identitySetName }}
 {{- end -}}
 {{- end -}}
-{{- end -}}
-{{- if $args -}}
-{{- join " \\\n                " $args }}
 {{- end -}}
 {{- end }}
