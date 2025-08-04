@@ -18,6 +18,77 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Install StrongDM CLI Client
+      run: |
+        # Download and install StrongDM CLI
+        curl -J -O -L https://app.strongdm.com/releases/cli/linux
+        unzip sdmcli_*.zip
+        sudo mv sdm /usr/local/bin/
+        sudo chmod +x /usr/local/bin/sdm
+        sdm --version
+        
+    - name: Configure StrongDM CLI
+      run: |
+        # Configure CLI with admin token
+        sdm login --admin-token ${{ secrets.SDM_ADMIN_TOKEN }}
+        
+        # Verify authentication
+        sdm status
+
+    - name: Install kubectl and Helm
+      run: |
+        # Install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+        
+        # Install Helm
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ vars.CLUSTER_NAME }}
+
+    - name: Delete all SDM Proxy Helm releases
+      run: |
+        echo "Deleting all SDM Proxy Helm releases..."
+        for i in 1 2 3 4; do
+          echo "Uninstalling sdm-proxy-$i..."
+          helm uninstall sdm-proxy-$i --namespace sdm-proxy || echo "Release sdm-proxy-$i not found"
+          
+          # Clean up any lingering jobs
+          kubectl delete job -n sdm-proxy sdm-proxy-register-cluster || echo "No register job to clean up for sdm-proxy-$i"
+        done
+        
+        # Clean up the namespace
+        kubectl delete namespace sdm-proxy || echo "Namespace sdm-proxy not found"
+
+    - name: Delete all SDM Clusters
+      run: |
+        echo "Deleting all StrongDM clusters created by the workflow..."
+        for i in 1 2 3 4; do
+          CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register-$i" | awk '{print $1}')
+          echo "Found cluster ID for gh-action-auto-register-$i: $CLUSTER_ID"
+          if [ -n "$CLUSTER_ID" ]; then
+            echo "Deleting cluster with ID: $CLUSTER_ID"
+            sdm admin clusters delete $CLUSTER_ID
+          else
+            echo "No cluster found with name 'gh-action-auto-register-$i'"
+          fi
+        done
+        
+        # Also check for the original cluster name without suffix
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
+        echo "Found cluster ID for gh-action-auto-register: $CLUSTER_ID"
+        if [ -n "$CLUSTER_ID" ]; then
+          echo "Deleting cluster with ID: $CLUSTER_ID"
+          sdm admin clusters delete $CLUSTER_ID
+        else
+          echo "No cluster found with name 'gh-action-auto-register'"
+        fi
         
     - name: Install eksctl
       run: |
@@ -64,35 +135,5 @@ jobs:
             .Events[] |
             . as $e |
             ($e.Resources[] | "\($e.EventName) \(.ResourceType)")' | sort | uniq
-
-    - name: Install StrongDM CLI Client
-      run: |
-        # Download and install StrongDM CLI
-        curl -J -O -L https://app.strongdm.com/releases/cli/linux
-        unzip sdmcli_*.zip
-        sudo mv sdm /usr/local/bin/
-        sudo chmod +x /usr/local/bin/sdm
-        sdm --version
-        
-    - name: Configure StrongDM CLI
-      if: always()
-      run: |
-        # Configure CLI with admin token
-        sdm login --admin-token ${{ secrets.SDM_ADMIN_TOKEN }}
-        
-        # Verify authentication
-        sdm status
-        
-    - name: Delete SDM Cluster
-      if: always()
-      run: |
-        echo "Testing StrongDM CLI functionality..."
-        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
-        echo "Found cluster ID: $CLUSTER_ID"
-        if [ -n "$CLUSTER_ID" ]; then
-          echo "Deleting cluster with ID: $CLUSTER_ID"
-          sdm admin clusters delete $CLUSTER_ID
-        fi
-        echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
         
  
