@@ -1,12 +1,17 @@
 name: Create EKS Cluster and Provision the Helm Chart
 
 on:
-  workflow_dispatch
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   create-cluster:
     runs-on: ubuntu-latest
     environment: dev
+    strategy:
+      matrix:
+        values_file: [1, 2, 3, 4]
     
     steps:
     - name: Validate inputs
@@ -137,20 +142,20 @@ jobs:
       if: always()
       run: |
         echo "Testing StrongDM CLI functionality..."
-        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register" | awk '{print $1}')
+        CLUSTER_ID=$(sdm admin clusters list | grep "gh-action-auto-register-${{ matrix.values_file }}" | awk '{print $1}')
         echo "Found cluster ID: $CLUSTER_ID"
         if [ -n "$CLUSTER_ID" ]; then
           echo "Deleting cluster with ID: $CLUSTER_ID"
           sdm admin clusters delete $CLUSTER_ID
         fi
-        echo "No cluster found with name 'gh-action-auto-register' - skipping deletion"
+        echo "No cluster found with name 'gh-action-auto-register-${{ matrix.values_file }}' - skipping deletion"
         
     - name: Deploy SDM Proxy Helm Chart (Local)
       id: helm-install
       continue-on-error: true
       run: |
         helm install sdm-proxy ./deployments/sdm-proxy \
-          --values ./deployments/sdm-proxy/values_integration_test.yaml \
+          --values ./deployments/sdm-proxy/values_integration_test_${{ matrix.values_file }}.yaml \
           --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
           --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
           --set-string strongdm.auth.adminToken="${{ secrets.SDM_ADMIN_TOKEN }}" \

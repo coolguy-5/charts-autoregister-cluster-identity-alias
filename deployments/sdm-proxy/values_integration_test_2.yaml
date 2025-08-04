@@ -1,0 +1,33 @@
+strongdm:
+  namespaceOverride: "sdm-proxy" # @schema; description: Override the release namespace.
+  service:
+    listenPort: 443 # @schema; description: Port on which the container runs.
+    containerPort: 8443 # @schema; description: Port on which the Service is expecting traffic.
+    type: LoadBalancer
+    tlsSource: ""
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "external"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+      service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "creator=Anthony"
+      service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      service.beta.kubernetes.io/aws-load-balancer-alpn-policy: HTTP2Optional
+    selectorLabels: {}
+
+  serviceAccount:
+    create: true
+    annotations: {}
+    labels: {} 
+  
+  # Enable RBAC for cluster-wide access
+  rbac:
+    create: true
+    clusterWide: true
+  
+  # Enable cluster access for Pod Identity
+  clusterAccess:
+    enabled: true
+    
+  autoRegisterCluster: # @schema; description: Cluster auto-registration configuration. Requires SDM_ADMIN_TOKEN be provided via one of the supported @strongdm.auth methods.
+    enabled: true # @schema; description: Register this k8s cluster as a StrongDM Pod Identity Cluster. See https://www.strongdm.com/docs/admin/resources/clusters/kubernetes-podidentity/ for more information.
+    resourceName: "gh-action-auto-register-2" # @schema; description: Name of the StrongDM Pod Identity Cluster resource to create.
