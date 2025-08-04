@@ -81,6 +81,7 @@ jobs:
           --node-type ${{ vars.NODE_TYPE }} \
           --managed \
           --with-oidc
+          --tags "Environment=dev,Project=strongdm,CreatedBy=github-actions,Owner=Anthony V"
           
     - name: Update kubeconfig
       run: |
