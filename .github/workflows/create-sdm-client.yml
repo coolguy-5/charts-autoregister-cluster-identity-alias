@@ -88,3 +88,4 @@ jobs:
       run: |
         helm install sdm-client ./deployments/sdm-client \
         --set-string strongdm.auth.serviceToken="${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}"
+        --namespace sdm-proxy 
