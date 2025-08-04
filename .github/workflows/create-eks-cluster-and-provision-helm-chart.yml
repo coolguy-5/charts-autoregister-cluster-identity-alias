@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     strategy:
+      max-parallel: 1
       matrix:
         values_file: [1, 2, 3, 4]
     
