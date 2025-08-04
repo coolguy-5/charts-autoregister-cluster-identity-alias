@@ -135,7 +135,7 @@ jobs:
         
     - name: Uninstall existing SDM Proxy Helm Chart
       run: |
-        helm uninstall sdm-proxy --namespace sdm-proxy || echo "No existing release to uninstall"
+        helm uninstall sdm-proxy-${{ matrix.values_file }} --namespace sdm-proxy || echo "No existing release to uninstall"
         sleep 15
         kubectl delete job -n sdm-proxy sdm-proxy-register-cluster || echo "Job isn't lingering after uninstall"
     
@@ -149,14 +149,12 @@ jobs:
           echo "Deleting cluster with ID: $CLUSTER_ID"
           sdm admin clusters delete $CLUSTER_ID
         fi
-        echo "No cluster found with name 'gh-action-auto-register-${{ matrix.values_file }}' - skipping deletion"
-        
           
     - name: Deploy SDM Proxy Helm Chart (Local)
       id: helm-install
       continue-on-error: true
       run: |
-        helm install sdm-proxy ./deployments/sdm-proxy \
+        helm install sdm-proxy-${{ matrix.values_file }} ./deployments/sdm-proxy \
           --values ./deployments/sdm-proxy/values_integration_test_${{ matrix.values_file }}.yaml \
           --set-string strongdm.auth.clusterKey="${{ secrets.SDM_CLUSTER_KEY }}" \
           --set-string strongdm.auth.clusterSecret="${{ secrets.SDM_CLUSTER_SECRET }}" \
