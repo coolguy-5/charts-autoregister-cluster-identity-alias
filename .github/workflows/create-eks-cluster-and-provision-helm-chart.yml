@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     strategy:
+      max-parallel: 1
       matrix:
         values_file: [1, 2, 3, 4]
     
@@ -150,6 +151,17 @@ jobs:
         fi
         echo "No cluster found with name 'gh-action-auto-register-${{ matrix.values_file }}' - skipping deletion"
         
+    - name: Uninstall existing SDM Client Helm Chart
+      run: |
+        helm uninstall sdm-client --namespace sdm-proxy || echo "No existing sdm-client release to uninstall"
+        
+    - name: Deploy SDM Client Helm Chart
+      run: |
+        helm install sdm-client ./deployments/sdm-client \
+          --set-string strongdm.auth.serviceToken="${{ secrets.SDM_SERVICE_ACCOUNT_TOKEN }}" \
+          --namespace sdm-proxy \
+          --create-namespace
+          
     - name: Deploy SDM Proxy Helm Chart (Local)
       id: helm-install
       continue-on-error: true
