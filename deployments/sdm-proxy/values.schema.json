@@ -221,6 +221,10 @@
                     },
                     "type": "object"
                 },
+                "discoveryUsername": {
+                    "description": "Username for StrongDM discovery. Also creates the RBAC resources required for this feature. Required if either @strongdm.autoRegisterCluster.identitySet or @strongdm.autoRegisterCluster.identitySetName are set.",
+                    "type": "string"
+                },
                 "healthcheckNamespace": {
                     "description": "Namespace in which StrongDM resource health checks are to occur. Associated/required RBAC resources are created in this namespace.",
                     "type": "string"
